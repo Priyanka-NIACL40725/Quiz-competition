@@ -1,2 +1,170 @@
 # Quiz-competition
-To conduct quiz to CTS employees
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quiz App</title>
+
+<style>
+body { font-family: Arial; background:#f4f6f9; margin:0; }
+.container { max-width:400px; margin:auto; padding:20px; }
+.card { background:white; padding:20px; border-radius:12px; margin-top:20px; }
+button { width:100%; padding:12px; background:#4CAF50; color:white; border:none; border-radius:8px; }
+input { width:100%; padding:10px; margin-top:10px; }
+.hidden { display:none; }
+.option { display:block; padding:8px; background:#eee; margin:5px 0; border-radius:8px; }
+</style>
+
+</head>
+<body>
+
+<div class="container">
+
+<!-- START -->
+<div id="start" class="card">
+  <h2>Quiz App</h2>
+  <input id="name" placeholder="Enter your name">
+  <input id="mobile" placeholder="Enter mobile number" maxlength="10">
+  <button onclick="startQuiz()">Start</button>
+</div>
+
+<!-- QUIZ -->
+<div id="quiz" class="card hidden">
+  <p>⏳ Time: <span id="timer">45</span>s</p>
+  <form id="quizForm"></form>
+  <button onclick="submitQuiz()">Submit</button>
+</div>
+
+<!-- RESULT -->
+<div id="result" class="card hidden">
+  <h3 id="scoreText"></h3>
+  <h3>🏆 Leaderboard</h3>
+  <ol id="leaderboard"></ol>
+  <button onclick="location.reload()">Play Again</button>
+</div>
+
+</div>
+
+<script>
+
+// 🔹 20 QUESTIONS
+const questionBank = [
+{q:"Capital of India?", options:["Delhi","Mumbai","Chennai","Kolkata"], answer:"Delhi"},
+{q:"2 + 2 ?", options:["3","4","5","6"], answer:"4"},
+{q:"5 x 5 ?", options:["20","25","30","10"], answer:"25"},
+{q:"Sun rises in?", options:["West","East","North","South"], answer:"East"},
+{q:"Water formula?", options:["CO2","H2O","O2","NaCl"], answer:"H2O"},
+{q:"Largest planet?", options:["Earth","Mars","Jupiter","Venus"], answer:"Jupiter"},
+{q:"Fastest animal?", options:["Lion","Tiger","Cheetah","Dog"], answer:"Cheetah"},
+{q:"HTML stands for?", options:["Hyper Text Markup Language","HighText","Hyper Tool","None"], answer:"Hyper Text Markup Language"},
+{q:"10 / 2 ?", options:["2","5","10","20"], answer:"5"},
+{q:"Square root of 16?", options:["2","4","6","8"], answer:"4"},
+{q:"Color of sky?", options:["Blue","Green","Red","Yellow"], answer:"Blue"},
+{q:"3 x 3 ?", options:["6","9","12","3"], answer:"9"},
+{q:"Largest ocean?", options:["Atlantic","Indian","Pacific","Arctic"], answer:"Pacific"},
+{q:"1 + 9 ?", options:["8","9","10","11"], answer:"10"},
+{q:"Earth is a?", options:["Planet","Star","Galaxy","Comet"], answer:"Planet"},
+{q:"7 - 2 ?", options:["3","4","5","6"], answer:"5"},
+{q:"Which is a fruit?", options:["Carrot","Apple","Potato","Onion"], answer:"Apple"},
+{q:"Opposite of hot?", options:["Cold","Warm","Cool","Heat"], answer:"Cold"},
+{q:"100 / 10 ?", options:["5","10","20","50"], answer:"10"},
+{q:"Which is a programming language?", options:["HTML","Python","CSS","All"], answer:"All"}
+];
+
+let selectedQuestions = [];
+let timer = 45;
+let countdown;
+
+// START QUIZ
+function startQuiz() {
+  let name = document.getElementById("name").value.trim();
+  let mobile = document.getElementById("mobile").value.trim();
+
+  if (!name) return alert("Enter name");
+  if (!mobile || mobile.length !== 10 || isNaN(mobile))
+    return alert("Enter valid 10-digit mobile number");
+
+  document.getElementById("start").classList.add("hidden");
+  document.getElementById("quiz").classList.remove("hidden");
+
+  selectedQuestions = questionBank.sort(() => 0.5 - Math.random()).slice(0,5);
+
+  renderQuestions();
+  startTimer();
+}
+
+// SHOW QUESTIONS
+function renderQuestions() {
+  let form = document.getElementById("quizForm");
+  form.innerHTML = "";
+
+  selectedQuestions.forEach((q, i) => {
+    let html = `<p>${i+1}. ${q.q}</p>`;
+    q.options.forEach(opt => {
+      html += `<label class="option">
+        <input type="radio" name="q${i}" value="${opt}"> ${opt}
+      </label>`;
+    });
+    form.innerHTML += html;
+  });
+}
+
+// TIMER
+function startTimer() {
+  countdown = setInterval(() => {
+    timer--;
+    document.getElementById("timer").innerText = timer;
+
+    if (timer <= 0) {
+      clearInterval(countdown);
+      submitQuiz();
+    }
+  }, 1000);
+}
+
+// SUBMIT
+function submitQuiz() {
+  clearInterval(countdown);
+
+  let score = 0;
+  let name = document.getElementById("name").value;
+  let mobile = document.getElementById("mobile").value;
+
+  selectedQuestions.forEach((q, i) => {
+    let selected = document.querySelector(`input[name="q${i}"]:checked`);
+    if (selected && selected.value === q.answer) score++;
+  });
+
+  let data = JSON.parse(localStorage.getItem("scores") || "[]");
+
+  data.push({name, mobile, score});
+  data.sort((a,b) => b.score - a.score);
+
+  localStorage.setItem("scores", JSON.stringify(data));
+
+  document.getElementById("quiz").classList.add("hidden");
+  document.getElementById("result").classList.remove("hidden");
+
+  document.getElementById("scoreText").innerText =
+    `${name} (${mobile}) - Score: ${score}/5`;
+
+  showLeaderboard();
+}
+
+// LEADERBOARD
+function showLeaderboard() {
+  let data = JSON.parse(localStorage.getItem("scores") || "[]");
+  let board = document.getElementById("leaderboard");
+  board.innerHTML = "";
+
+  data.slice(0,5).forEach(d => {
+    let li = document.createElement("li");
+    li.textContent = `${d.name} (${d.mobile}) - ${d.score}`;
+    board.appendChild(li);
+  });
+}
+
+</script>
+
+</body>
+</html>
